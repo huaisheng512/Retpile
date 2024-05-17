@@ -45,23 +45,48 @@ Playwright版本：1.35.0<br>
 
 可以看到当前是一个html的页面，我们直接进入到详情页，测试过几个小说，这里如果我们是通过搜索的话，就是直接<link>https://www.qidian.com/so/关键词.html</link>，这样的话是可以达到搜索结果的，其它的方式是不一样的，这个得看具体是怎样搜索的姿势了，不过这里我们可以先记录一下
 
-我们先看一下这一页的数据好不好获取，嗯~好像完全没问题，这下我们可以直接通过url来进行跳转了，直接进入书籍详情，现在就是所有章节的内容获取了，我们可以看到也是比较清晰的
-
-现在直接看下章节页的详情内容，这里我们直接跑下代码，先获取一下标题看是否有啥问题
-很好，现在标题获取到了，那内容的话应该也就没啥问题了
-我们写下代码随便获取章节中一段的内容
-
-额好像也能获取到，看似是没啥问题的，凭经验判断是通过上面的p[8]后面的的来进行段落的获取，那我们再来测试一下
-
-怎么会每个都一样？这里我们得看下我们的代码，是通过page.evaluate里面然后通过document.querySelector获得到选择器，然后通过这个选择器找到属性，那我们回头看一下我们找的属性，换一种写法，直接通过query_selector来
-
+我们先看一下这一页的数据好不好获取<br>
+![ ](https://github.com/huaisheng512/Retpile/blob/main/Pic/s7.png)
+嗯~好像完全没问题，这下我们可以直接通过url来进行跳转了，直接进入书籍详情，现在就是所有章节的内容获取了，我们可以看到也是比较清晰的
 ![ ](https://github.com/huaisheng512/Retpile/blob/main/Pic/s6.png)
+现在直接看下章节页的详情内容，这里我们直接跑下代码，先获取一下标题看是否有啥问题
+```
+with sync_playwright() as p:
+    # 非无痕模式启动
+    browser = p.chromium.launch_persistent_context(
+        # 指定本机用户缓存地址
+        user_data_dir="D:\\chrome_userx\\huaishion",
+        # 接收下载事件
+        accept_downloads=True,
+        # 设置 GUI 模式
+        headless=False,
+        bypass_csp=True,
+        slow_mo=200,
+        channel="chrome",
+        args=['--disable-blink-features=AutomationControlled',
+              '--window-position=-2000,-2000']
+    )
+    # page = browser.new_page() 
+    page = browser.pages[0]
+    print(f"章节内容URL：{url}")
+    page.goto(url)
+    print("标题：" + page.title())
+    context_text = page.query_selector(
+                "//*[@id='c-20236869']/p[8]/span").text_content()
+    print(context_text)
+    browser.close()
+```
+如果标题获取到了，且没有什么对抗反爬的手段的话，那内容的话应该也就没啥问题了(有些可能会有一些字体反爬或者其它手段之类的)
+我们写下代码随便获取章节中一段的内容
+![ ](https://github.com/huaisheng512/Retpile/blob/main/Pic/s9.png)
+额好像也能获取到，看似是没啥问题的，凭经验判断是通过上面的p[8]后面的的来进行段落的获取，那我们再来测试一下，变量替换，循环输出三次看下
+![ ](https://github.com/huaisheng512/Retpile/blob/main/Pic/s10.png)
+嗯？怎么会每个都一样？这里我们得看下我们的代码，是通过page.evaluate里面然后通过document.querySelector获得到选择器，然后通过这个选择器找到属性，那我们回头看一下我们找的属性，确实是写死了，换一种写法，直接通过query_selector来操作
 哦豁，好像还是有点报错，没关系我们先看一下报错信息，提示'NoneType' object has no attribute 'text_content'，很显然找不到属性，那我们就得先看一下我们找的选择器id是否正确了
-
+![ ](https://github.com/huaisheng512/Retpile/blob/main/Pic/err1.png)
 再来一次，嗯~现在没啥问题了，现在就直接获取整章的内容了
-
-OK，和网页上最后的一段对比一下，都没啥问题，现在我们应该算是写完这部分了，接下来就是整合，上面我们都看了每个URL大概是怎么生成的了，再大概梳理代码写一下<br>
-
+![ ](https://github.com/huaisheng512/Retpile/blob/main/Pic/s11.png)
+具体代码如下：
 ```
 item = 1
     while True:
@@ -73,4 +98,6 @@ item = 1
         except Exception as e:
             break
 ```
+OK，看下输出内容和网页上最后的一段对比一下，基本上都没啥问题，现在我们应该算是写完这部分了，接下来就是整合，上面我们都看了每个URL大概是怎么生成的了，再大概梳理代码写一下<br>
+
 
